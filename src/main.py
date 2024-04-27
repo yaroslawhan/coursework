@@ -47,17 +47,6 @@ weekday = today.weekday()
 main_title = (data["rows"]["week"]["weekRussia"]["days"][0]["date"]).split("-")[0] + " " + month_names[int((data["rows"]["week"]["weekRussia"]["days"][0]["date"]).split("-")[1])] + " - " + (data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[0] + " " + month_names[int((data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[1])] + ", " + (data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[2] # int(today.strftime("%d "))
 dates = [(int(today.strftime("%d ")) + i - weekday) for i in range(7)]
 
-# Функции для окна
-def lbl(t, xx, yy):
-    l = ttk.Label(win, text=t, font=("Arial", 14), background="#fafafa")
-    l.place(x=xx, y=yy)
-def ent(key, xx, yy):
-    ents[key] = ttk.Entry(win)
-    ents[key].place(x=xx, y=yy)
-def btn(command, text, xx, yy):
-    btt = ttk.Button(command=command, text=text, style='Custom.TButton')
-    btt.place(x=xx, y=yy, width = 220, height = 30)
-
 # Функция рисования расписания
 def schedule_drawing():
     # Вывод информации о неделе
@@ -97,21 +86,28 @@ def schedule_drawing():
         row_headers["canvases"].append([Canvas(row_headers["frame"], bg="#ffffff", highlightthickness=1, highlightbackground="#000000", width=128, height=70, relief="solid")])
         row_headers["canvases"][i][0].pack(side=TOP, fill=BOTH, expand=True)
         row_headers["canvases"][i].append(row_headers["canvases"][i][0].create_text(10, 5, anchor=NW, text=data["rows"]["organizations"][0]["lessonsTimeChunks"][i], font=("Arial", 10), fill="#6f6f6f"))
+    main_canvas.create_window((0, 0), anchor='nw', window=win)
+    main_canvas.update_idletasks()
+    main_canvas.configure(scrollregion=main_canvas.bbox('all'), yscrollcommand=scrollbar.set)
+    main_canvas.pack(fill='both', expand=True, side='left')
+    scrollbar.pack(fill='y', side='right')
+
 
 # Создание окна
-win = Tk()
-win.title("Расписание")
-win.geometry("1620x900")
-win.config(bg="#fafafa")
+root = Tk()
+root.title("Расписание")
+root.geometry("1620x900")
+root.config(bg="#fafafa")
+
+main_canvas = Canvas(root, bg="#000000")
+scrollbar = Scrollbar(root, orient="vertical", command=main_canvas.yview)
+win = Frame(main_canvas, bg="green")
+ #, orient="vertical", command=)
 
 # Временное решение для вывода data
 # editor = Text()
 # editor.pack(fill=BOTH, expand=1)
 # editor.insert("1.0", data)
-
-# Создание стиля для кнопок
-style = ttk.Style()
-style.configure('Custom.TButton', font=('Arial', 14))
 
 # Рисование окна
 if data["state"] == True:
