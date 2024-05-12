@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1620</width>
-    <height>900</height>
+    <height>940</height>
    </rect>
   </property>
   <property name="palette">
@@ -9319,6 +9319,8 @@
     <property name="title">
      <string>Файл</string>
     </property>
+    <addaction name="action"/>
+    <addaction name="action_2"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -9334,6 +9336,16 @@
    <addaction name="menu_2"/>
    <addaction name="menu_3"/>
   </widget>
+  <action name="action">
+   <property name="text">
+    <string>Открыть</string>
+   </property>
+  </action>
+  <action name="action_2">
+   <property name="text">
+    <string>Сохранить расисание</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 import requests
 from datetime import datetime
+import json
 
 #Создание и обработка запроса
 url = "https://lk.gubkin.ru/schedule/api/api.php"
@@ -63,6 +64,7 @@ class Ui_MainWindow(object):
         self.vlayouts = []
         self.hlayouts = {}
         self.double_lessons_list = []
+        self.menu = {}
 
         self.test = []
 
@@ -561,13 +563,10 @@ class Ui_MainWindow(object):
         self.lessons[i]["label_1"].setMinimumSize(QtCore.QSize(1, 1))
         self.lessons[i]["label_1"].setMaximumSize(QtCore.QSize(209, 1000))
         self.lessons[i]["vlayout"].addWidget(self.lessons[i]["label_1"])
-        #try:
         if [lessons_data[i]["type"], lessons_data[i]["weekDayNumber"], lessons_data[i]["timeChunks"], lessons_data[i]["course"], lessons_data[i]["groups"][0]["id"]] in self.double_lessons_list:
             self.hlayouts[str(j)+"_"+str(k)].addWidget(self.lessons[i]["frame"])
         else:
             self.gridLayout.addWidget(self.lessons[i]["frame"], j+2, k+2, duration, 1)
-        #except:
-            #print("Error: ", str(lessons_data[i]["course"]["id"]))
 
     # Функция для отрисовки заголовков строк на форме
     def row_header_func(self, i):
@@ -637,6 +636,17 @@ class Ui_MainWindow(object):
         self.column_header[i]["label_2"].setObjectName(f"column_header_label_2_{i}")
         self.column_header[i]["vlayout"].addWidget(self.column_header[i]["label_2"])
         self.gridLayout.addWidget(self.column_header[i]["frame"], 1, i+2, 1, 1)
+
+    # Функция сохранения расписания в файл
+    def schedule_save(self):
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(None, "Сохранить как...", "", "JSON Files (*.json)")
+        if file_path:
+            with open(file_path, 'w') as file:
+                json.dump(data, file)
+
+    # Функция открытия расписания из файла
+    def schedule_open(self):
+        pass
 
     # Основная функция отрисовки
     def setupUi(self, MainWindow):
@@ -790,8 +800,6 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, MainWindow.frameGeometry().width(), MainWindow.frameGeometry().height()))
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-        #layout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
-
 
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
@@ -1156,17 +1164,14 @@ class Ui_MainWindow(object):
             if (temp in lessons_temp) and (temp not in self.double_lessons_list):
                 self.hlayout_func(c, lessons_data[i]["timeChunks"][0], lessons_data[i]["weekDayNumber"], len(lessons_data[i]["timeChunks"]))
                 self.double_lessons_list.append(temp)
+                c += 1
             else:
                 lessons_temp.append(temp)
-        print(self.double_lessons_list)
-        print("c = " + str(c))
         lessons_temp.clear()
 
         # Вставка уроков в таблицу
-        d = 1
         for i in range(len(lessons_data)):
             duration = len(lessons_data[i]["timeChunks"])
-            print(lessons_data[i]["course"]["id"])
             self.lessons_func(i, lessons_data[i]["timeChunks"][0], lessons_data[i]["weekDayNumber"], duration)
 
         self.verticalLayout.addLayout(self.gridLayout)
@@ -1174,19 +1179,29 @@ class Ui_MainWindow(object):
         spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem2)
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1620, 21))
-        self.menuBar.setObjectName("menuBar")
-        self.menu = QtWidgets.QMenu(self.menuBar)
-        self.menu.setObjectName("menu")
-        self.menu_2 = QtWidgets.QMenu(self.menuBar)
-        self.menu_2.setObjectName("menu_2")
-        self.menu_3 = QtWidgets.QMenu(self.menuBar)
-        self.menu_3.setObjectName("menu_3")
-        MainWindow.setMenuBar(self.menuBar)
-        self.menuBar.addAction(self.menu.menuAction())
-        self.menuBar.addAction(self.menu_2.menuAction())
-        self.menuBar.addAction(self.menu_3.menuAction())
+
+        # Меню
+        self.menu["bar"] = QtWidgets.QMenuBar(MainWindow)
+        self.menu["bar"].setGeometry(QtCore.QRect(0, 0, 1620, 21))
+        self.menu["bar"].setObjectName("menuBar")
+        self.menu["file"] = {"widget": QtWidgets.QMenu(self.menu["bar"])}
+        self.menu["file"]["widget"].setObjectName("menu_file")
+        self.menu["file"]["open"] = QtWidgets.QAction(MainWindow)
+        self.menu["file"]["open"].setObjectName("menu_file_open")
+        self.menu["file"]["save"] = QtWidgets.QAction(MainWindow)
+        self.menu["file"]["save"].setObjectName("menu_file_save")
+        self.menu["file"]["widget"].addAction(self.menu["file"]["open"])
+        self.menu["file"]["widget"].addAction(self.menu["file"]["save"])
+        self.menu["file"]["open"].triggered.connect(self.schedule_open)
+        self.menu["file"]["save"].triggered.connect(self.schedule_save)
+        self.menu["settings"] = QtWidgets.QMenu(self.menu["bar"])
+        self.menu["settings"].setObjectName("menu_settings")
+        self.menu["about"] = QtWidgets.QMenu(self.menu["bar"])
+        self.menu["about"].setObjectName("menu_about")
+        MainWindow.setMenuBar(self.menu["bar"])
+        self.menu["bar"].addAction(self.menu["file"]["widget"].menuAction())
+        self.menu["bar"].addAction(self.menu["settings"].menuAction())
+        self.menu["bar"].addAction(self.menu["about"].menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -1221,9 +1236,11 @@ class Ui_MainWindow(object):
                     s += lessons_data[i]["teachers"][j]["lastName"] + " " + lessons_data[i]["teachers"][j]["firstName"][0] + ". " + lessons_data[i]["teachers"][j]["patronymic"][0] + "., "    
             self.lessons[i]["label_1"].setText(_translate("MainWindow", s))
 
-        self.menu.setTitle(_translate("MainWindow", "Файл"))
-        self.menu_2.setTitle(_translate("MainWindow", "Настройки"))
-        self.menu_3.setTitle(_translate("MainWindow", "О программе"))
+        self.menu["file"]["widget"].setTitle(_translate("MainWindow", "Файл"))
+        self.menu["settings"].setTitle(_translate("MainWindow", "Настройки"))
+        self.menu["about"].setTitle(_translate("MainWindow", "О программе"))
+        self.menu["file"]["open"].setText(_translate("MainWindow", "Открыть"))
+        self.menu["file"]["save"].setText(_translate("MainWindow", "Сохранить расисание"))
 
         MainWindow.setCentralWidget(self.centralwidget)
 
