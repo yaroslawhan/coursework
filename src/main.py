@@ -83,6 +83,7 @@ class Ui_MainWindow(object):
         # Создание палитр для виджетов
         self.palette = {}
         self.palette["row_header"] = {}
+        self.palette["lessons"] = {}
         self.palette["row_header"]["frame"] = QtGui.QPalette()
         self.palette["row_header"]["label"] = QtGui.QPalette()
         self.palette["column_header"] = {}
@@ -92,6 +93,7 @@ class Ui_MainWindow(object):
         self.palette["column_header"]["frame"]["normal"]["frame"] = QtGui.QPalette()
         self.palette["column_header"]["frame"]["weekend"] = QtGui.QPalette()
         self.palette["column_header"]["frame"]["today"] = QtGui.QPalette()
+        self.palette["lessons"]["red"] = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         self.palette["row_header"]["frame"].setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
@@ -529,6 +531,16 @@ class Ui_MainWindow(object):
         brush = QtGui.QBrush(QtGui.QColor(125, 125, 125))
         brush.setStyle(QtCore.Qt.SolidPattern)
         self.palette["column_header"]["frame"]["normal"]["text"].setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
+        #
+        brush = QtGui.QBrush(QtGui.QColor(252, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        self.palette["lessons"]["red"].setBrush(QtGui.QPalette.Active, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(252, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        self.palette["lessons"]["red"].setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.WindowText, brush)
+        brush = QtGui.QBrush(QtGui.QColor(125, 125, 125))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        self.palette["lessons"]["red"].setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
 
     def scrollArea_func(self):
         self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
@@ -586,6 +598,21 @@ class Ui_MainWindow(object):
             self.hlayouts[str(j)+"_"+str(k)].addWidget(self.lessons[i]["frame"])
         else:
             self.gridLayout.addWidget(self.lessons[i]["frame"], j+2, k+2, duration, 1)
+        if data["rows"]["organizations"][0]["lessons"][i]["isCanceled"] == True or data["rows"]["organizations"][0]["lessons"][i]["isMoved"] == True:
+            font = QtGui.QFont()
+            font.setFamily("Arial")
+            font.setPointSize(12)
+            font.setBold(True)
+            self.lessons[i]["label_2"] = QtWidgets.QLabel(self.lessons[i]["frame"])
+            self.lessons[i]["label_2"].setPalette(self.palette["lessons"]["red"])
+            self.lessons[i]["label_2"].setFont(font)
+            self.lessons[i]["label_2"].setAlignment(QtCore.Qt.AlignLeft)
+            self.lessons[i]["label_2"].setObjectName(f"lessons_label_2_{i}")
+            self.lessons[i]["label_2"].setWordWrap(True)
+            self.lessons[i]["label_2"].setMinimumSize(QtCore.QSize(1, 1))
+            self.lessons[i]["label_2"].setMaximumSize(QtCore.QSize(209, 1000))
+            self.lessons[i]["vlayout"].addWidget(self.lessons[i]["label_2"])
+
 
     # Функция для отрисовки заголовков строк на форме
     def row_header_func(self, i):
@@ -1304,6 +1331,12 @@ class Ui_MainWindow(object):
                 else:
                     s += lessons_data[i]["teachers"][j]["lastName"] + " " + lessons_data[i]["teachers"][j]["firstName"][0] + ". " + lessons_data[i]["teachers"][j]["patronymic"][0] + "., "    
             self.lessons[i]["label_1"].setText(_translate("MainWindow", s))
+            if data["rows"]["organizations"][0]["lessons"][i]["isCanceled"] == True:
+                s = "Отменено"
+                self.lessons[i]["label_2"].setText(_translate("MainWindow", s))
+            if data["rows"]["organizations"][0]["lessons"][i]["isMoved"] == True:
+                s = "Перенесено на " + data["rows"]["organizations"][0]["lessons"][i]["movedTo"]
+                self.lessons[i]["label_2"].setText(_translate("MainWindow", s))
 
         MainWindow.setCentralWidget(self.centralwidget)
 
