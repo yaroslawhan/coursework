@@ -10,10 +10,16 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMessageBox
+import os
 import sys
 import requests
 from datetime import datetime, timedelta
 import json
+
+# Функция для получения пути к временной директории
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 #Создание и обработка запроса
 url = "https://lk.gubkin.ru/schedule/api/api.php"
@@ -42,15 +48,16 @@ month_names = {
     11: 'ноября',
     12: 'декабря'
 }
-days_of_week = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+days_of_week = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 
+                'Пятница', 'Суббота', 'Воскресенье']
 weekday = today.weekday()
-dates = [(int(today.strftime("%d ")) + i - weekday) for i in range(7)]
+dates = [int(data["rows"]["week"]["weekRussia"]["days"][i]["date"].split("-")[0]) for i in range(7)]
 
 # Создание некоторых переменных
 def data_vars_func():
     global main_title, time_chunks, lessons_data, right_subtitle, app
     if data["state"] == True:
-        main_title = (data["rows"]["week"]["weekRussia"]["days"][0]["date"]).split("-")[0] + " " + month_names[int((data["rows"]["week"]["weekRussia"]["days"][0]["date"]).split("-")[1])] + " - " + (data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[0] + " " + month_names[int((data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[1])] + ", " + (data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[2] # int(today.strftime("%d "))
+        main_title = (data["rows"]["week"]["weekRussia"]["days"][0]["date"]).split("-")[0] + " " + month_names[int((data["rows"]["week"]["weekRussia"]["days"][0]["date"]).split("-")[1])] + " - " + (data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[0] + " " + month_names[int((data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[1])] + ", " + (data["rows"]["week"]["weekRussia"]["days"][6]["date"]).split("-")[2]
         time_chunks = data["rows"]["organizations"][0]["lessonsTimeChunks"]
         lessons_data = data["rows"]["organizations"][0]["lessons"]
         if data["rows"]["week"]["weekRussia"]["type"] == "lower":
@@ -76,7 +83,14 @@ class Ui_MainWindow(object):
         self.menu = {}
         self.layout = None
 
-        self.test = []
+        # pixmap'ы для кнопок
+        self.pixmap_left = QtGui.QPixmap(resource_path('left_arrow.png'))
+        self.pixmap_left_active = QtGui.QPixmap(resource_path('left_arrow_active.png'))
+        self.pixmap_left_entered = QtGui.QPixmap(resource_path('left_arrow_entered.png'))
+        self.pixmap_schedule = QtGui.QPixmap(resource_path('schedule_img.png'))
+        self.pixmap_right = QtGui.QPixmap(resource_path('right_arrow.png'))
+        self.pixmap_right_active = QtGui.QPixmap(resource_path('right_arrow_active.png'))
+        self.pixmap_right_entered = QtGui.QPixmap(resource_path('right_arrow_entered.png'))
 
         self.scrollArea = None
 
@@ -613,7 +627,6 @@ class Ui_MainWindow(object):
             self.lessons[i]["label_2"].setMaximumSize(QtCore.QSize(209, 1000))
             self.lessons[i]["vlayout"].addWidget(self.lessons[i]["label_2"])
 
-
     # Функция для отрисовки заголовков строк на форме
     def row_header_func(self, i):
         self.row_header.append({"frame": QtWidgets.QFrame(self.scrollAreaWidgetContents)})
@@ -684,7 +697,8 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.column_header[i]["frame"], 1, i+2, 1, 1)
 
     # Функции обработки нажатия на кнопки
-    def left_arrow_clicked(self):
+    def left_arrow_released(self):
+        self.left_arrow.setPixmap(self.pixmap_left)
         global formatted_date
         formatted_date_local = (datetime.strptime(formatted_date, '%d-%m-%Y') - timedelta(days=7)).strftime('%d-%m-%Y')
         params = {
@@ -709,7 +723,6 @@ class Ui_MainWindow(object):
             self.double_lessons_list = []
             self.menu = {}
             self.layout = None
-            self.test = []
             self.scrollArea = None
             self.setupUi(MainWindow)
         else:
@@ -719,7 +732,8 @@ class Ui_MainWindow(object):
             msg.setIcon(QMessageBox.Critical)
             msg.exec_()
 
-    def right_arrow_clicked(self):
+    def right_arrow_released(self):
+        self.right_arrow.setPixmap(self.pixmap_right)
         global formatted_date
         formatted_date_local = (datetime.strptime(formatted_date, '%d-%m-%Y') + timedelta(days=7)).strftime('%d-%m-%Y')
         params = {
@@ -744,7 +758,6 @@ class Ui_MainWindow(object):
             self.double_lessons_list = []
             self.menu = {}
             self.layout = None
-            self.test = []
             self.scrollArea = None
             self.setupUi(MainWindow)
         else:
@@ -761,7 +774,7 @@ class Ui_MainWindow(object):
         MainWindow.resize(1620, 2000)
         MainWindow.move(50, 50)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("icon.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        icon.addPixmap(QtGui.QPixmap(resource_path("icon.png")), QtGui.QIcon.Selected, QtGui.QIcon.On)
         MainWindow.setWindowIcon(icon)
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
@@ -905,6 +918,14 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.layout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.scrollArea_func()
+
+        # Создание элемента загрузки
+        self.loading_label = QtWidgets.QLabel()
+        self.loading = QtGui.QMovie(resource_path("loading.gif"))
+        self.loading_label.setMovie(self.loading)
+        self.layout.addWidget(self.loading_label)
+        self.loading_label.setVisible(False)
+
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
@@ -927,22 +948,26 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setContentsMargins(-1, 0, -1, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
 
+        # Прорисовка стрелок
         self.left_arrow = QtWidgets.QLabel(self.week_info_frame)
-        pixmap = QtGui.QPixmap('left_arrow.png')
-        self.left_arrow.setPixmap(pixmap)
-        self.left_arrow.resize(pixmap.width(), pixmap.height())
-        self.left_arrow.mousePressEvent = lambda _: self.left_arrow_clicked()
+        self.left_arrow.setPixmap(self.pixmap_left)
+        self.left_arrow.resize(self.pixmap_left.width(), self.pixmap_left.height())
+        self.left_arrow.enterEvent = lambda _: self.left_arrow.setPixmap(self.pixmap_left_active)
+        self.left_arrow.mousePressEvent = lambda _: self.left_arrow.setPixmap(self.pixmap_left_entered)
+        self.left_arrow.mouseReleaseEvent = lambda _: self.left_arrow_released()
+        self.left_arrow.leaveEvent = lambda _: self.left_arrow.setPixmap(self.pixmap_left)
         self.horizontalLayout.addWidget(self.left_arrow)
         self.schedule_img = QtWidgets.QLabel(self.week_info_frame)
-        pixmap = QtGui.QPixmap('schedule_img.png')
-        self.schedule_img.setPixmap(pixmap)
-        self.schedule_img.resize(pixmap.width(), pixmap.height())
+        self.schedule_img.setPixmap(self.pixmap_schedule)
+        self.schedule_img.resize(self.pixmap_schedule.width(), self.pixmap_schedule.height())
         self.horizontalLayout.addWidget(self.schedule_img)
         self.right_arrow = QtWidgets.QLabel(self.week_info_frame)
-        pixmap = QtGui.QPixmap('right_arrow.png')
-        self.right_arrow.setPixmap(pixmap)
-        self.right_arrow.resize(pixmap.width(), pixmap.height())
-        self.right_arrow.mousePressEvent = lambda _: self.right_arrow_clicked()
+        self.right_arrow.setPixmap(self.pixmap_right)
+        self.right_arrow.resize(self.pixmap_right.width(), self.pixmap_right.height())
+        self.right_arrow.enterEvent = lambda _: self.right_arrow.setPixmap(self.pixmap_right_active)
+        self.right_arrow.mousePressEvent = lambda _: self.right_arrow.setPixmap(self.pixmap_right_entered)
+        self.right_arrow.mouseReleaseEvent = lambda _: self.right_arrow_released()
+        self.right_arrow.leaveEvent = lambda _: self.right_arrow.setPixmap(self.pixmap_right)
         self.horizontalLayout.addWidget(self.right_arrow)
 
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -1273,8 +1298,8 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.empty_header_frame, 1, 0, 1, 1)
         for i in range(len(time_chunks)):
             self.row_header_func(i)
-        MainWindow.resize(1620, 900)
-        self.scrollAreaWidgetContents.resize(1620, 1700)
+        MainWindow.resize(1650, 900)
+        self.scrollAreaWidgetContents.resize(1620, 1650)
         for i in range(len(data["rows"]["week"]["weekRussia"]["days"])):
             self.column_header_func(i)
         # Вставка hlayout в таблицу уроков
